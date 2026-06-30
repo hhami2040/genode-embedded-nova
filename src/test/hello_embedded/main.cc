@@ -3,5 +3,6 @@
 
 void Component::construct(Genode::Env &env)
 {
+    (void)env; 
     Genode::log("=== [Task 1] Hello Embedded on NOVA Microkernel ===");
 }

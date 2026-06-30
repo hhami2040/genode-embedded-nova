@@ -9,7 +9,11 @@ install_config {
         <service name="ROM"/> <service name="PD"/> <service name="CPU"/> <service name="LOG"/>
     </parent-provides>
     <start name="hello_embedded">
-        <resource name="RAM" quantum="1M"/>
+        <resource name="RAM" quantum="2M"/>
+        <resource name="CAP" quantum="100"/>
+        <route>
+            <any-service> <parent/> </any-service>
+        </route>
     </start>
 </config>
 }
@@ -17,4 +21,4 @@ install_config {
 build { test/hello_embedded }
 build_boot_image { core init hello_embedded }
 
-run_genode_until_forever
+run_genode_until forever
