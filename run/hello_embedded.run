@@ -1,0 +1,20 @@
+create_boot_directory
+
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/src/init
+
+install_config {
+<config>
+    <parent-provides>
+        <service name="ROM"/> <service name="PD"/> <service name="CPU"/> <service name="LOG"/>
+    </parent-provides>
+    <start name="hello_embedded">
+        <resource name="RAM" quantum="1M"/>
+    </start>
+</config>
+}
+
+build { test/hello_embedded }
+build_boot_image { core init hello_embedded }
+
+run_genode_until_forever
