@@ -1,0 +1,38 @@
+create_boot_directory
+
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/src/init
+
+install_config {
+<config>
+    <parent-provides>
+        <service name="ROM"/> <service name="PD"/> <service name="CPU"/> <service name="LOG"/>
+    </parent-provides>
+    
+    <start name="calc_server">
+        <resource name="RAM" quantum="2M"/>
+        <resource name="CAP" quantum="100"/>
+        <provides> <service name="Calc"/> </provides>
+        <route>
+            <any-service> <parent/> </any-service>
+        </route>
+    </start>
+
+    <start name="calc_client">
+        <resource name="RAM" quantum="2M"/>
+        <resource name="CAP" quantum="100"/>
+        <route>
+            <service name="Calc"> <child name="calc_server"/> </service>
+            <any-service> <parent/> </any-service>
+        </route>
+    </start>
+</config>
+}
+
+
+build { server/calc test/calc_client }
+
+
+build_boot_image { core init calc_server calc_client }
+
+run_genode_until forever
