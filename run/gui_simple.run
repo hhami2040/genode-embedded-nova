@@ -1,0 +1,52 @@
+create_boot_directory
+
+# ۱. تعریف فایل‌های کانفیگ برای اجرای مستقیم بدون Depot
+install_config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+	</parent-provides>
+	
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<default caps="100"/>
+
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+
+	<start name="nitpicker">
+		<resource name="RAM" quantum="4M"/>
+		<provides><service name="Gui"/></provides>
+		<config>
+			<domain name="default" layer="1" content="client" label="no"/>
+			<default-policy domain="default"/>
+		</config>
+	</start>
+
+	<start name="testnit">
+		<resource name="RAM" quantum="2M"/>
+		<route>
+			<service name="Gui"> <child name="nitpicker"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+</config>}
+
+# ۲. مشخص کردن تارگت‌هایی که باید بیلد بشن
+build { server/nitpicker test/nitpicker }
+
+# ۳. جمع‌آوری خودکار تمام باینری‌های کامپایل شده
+build_boot_image [build_artifacts]
+
+# ۴. اجرای محیط شبیه‌ساز گرافیکی در QEMU
+run_genode_until forever
