@@ -3,31 +3,53 @@ create_boot_directory
 build {
     core
     init
+    timer
     app/fss_test
+    lib/ld-nova
+    lib/libc
+    lib/vfs
 }
 
 install_config {
 <config verbose="yes">
-<parent-provides>
-<service name="LOG"/>
-<service name="ROM"/>
-<service name="RAM"/>
-<service name="PD"/>
-<service name="CPU"/>
-</parent-provides>
-<default-route>
-<any-service> <parent/> </any-service>
-</default-route>
-<start name="fss_test" caps="100">
-<resource name="RAM" quantum="8M"/>
-</start>
+    <parent-provides>
+        <service name="ROM"/> <service name="PD"/> <service name="RM"/>
+        <service name="CPU"/> <service name="LOG"/>
+    </parent-provides>
+    
+    <default-route>
+        <any-service> <parent/> <any-child/> </any-service>
+    </default-route>
+
+    <start name="timer" caps="100">
+        <resource name="RAM" quantum="1M"/>
+        <provides> <service name="Timer"/> </provides>
+    </start>
+    
+    <start name="fss_test" caps="200">
+        <resource name="RAM" quantum="8M"/>
+        <config>
+            <vfs>
+                <dir name="dev"> <log/> </dir>
+            </vfs>
+            <libc stdout="/dev/log" stderr="/dev/log"/>
+        </config>
+    </start>
 </config>
 }
 
 build_boot_image {
     core
     init
+    timer
     fss_test
+    ld-nova.lib.so
+    libc.lib.so
+    vfs.lib.so
 }
 
-run_genode_until {--- \[fss_test\] Component started successfully! ---.*} 60
+# غیرفعال کردن گرافیک برای دیدن خروجی در همین ترمینال
+append qemu_args "-nographic "
+
+# زمان انتظار برای اجرای موفق
+run_genode_until {--- \[fss_test\] Component started successfully.*} 30
