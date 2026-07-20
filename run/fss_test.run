@@ -1,55 +1,76 @@
+# --- fss_test.run ---
+
 create_boot_directory
 
-build {
-    core
-    init
-    timer
-    app/fss_test
-    lib/ld-nova
-    lib/libc
-    lib/vfs
-}
-
-install_config {
-<config verbose="yes">
+set config {
+<config>
     <parent-provides>
-        <service name="ROM"/> <service name="PD"/> <service name="RM"/>
-        <service name="CPU"/> <service name="LOG"/>
+        <service name="CPU"/> <service name="IO_MEM"/> <service name="IO_PORT"/>
+        <service name="IRQ"/> <service name="LOG"/> <service name="PD"/>
+        <service name="RM"/> <service name="ROM"/> <service name="Timer"/>
     </parent-provides>
     
     <default-route>
-        <any-service> <parent/> <any-child/> </any-service>
+        <any-service> <parent/> <child name="init"/> </any-service>
     </default-route>
 
     <start name="timer" caps="100">
         <resource name="RAM" quantum="1M"/>
-        <provides> <service name="Timer"/> </provides>
+        <provides><service name="Timer"/></provides>
     </start>
-    
+
+    <start name="vfs_block" caps="100">
+        <resource name="RAM" quantum="32M"/>
+        <provides>
+            <service name="File_system"/>
+            <service name="Block"/>
+        </provides>
+        <config>
+            <vfs> <ram/> </vfs>
+            <policy label="fatfs_storage" root="/" writeable="yes"/>
+        </config>
+    </start>
+
     <start name="fss_test" caps="200">
-        <resource name="RAM" quantum="8M"/>
+        <resource name="RAM" quantum="64M"/>
         <config>
             <vfs>
-                <dir name="dev"> <log/> </dir>
+                <dir name="storage">
+                    <fs label="fatfs_storage" />
+                </dir>
+                <log/>
             </vfs>
             <libc stdout="/dev/log" stderr="/dev/log"/>
         </config>
+        <route>
+            <service name="Timer"> <child name="timer"/> </service>
+            <service name="LOG"> <parent/> </service>
+            <service name="File_system"> <child name="vfs_block"/> </service>
+            <any-service> <parent/> </any-service>
+        </route>
     </start>
-</config>
+</config>}
+
+install_config $config
+
+build {
+    core
+    init
+    app/fss_test
+    server/vfs_block
+    timer/nova
+    lib/libc
+    lib/vfs
+    lib/vfs_fatfs
 }
 
 build_boot_image {
     core
     init
-    timer
     fss_test
-    ld-nova.lib.so
-    libc.lib.so
-    vfs.lib.so
+    vfs_block
+    timer
+    [build_artifacts]
 }
 
-# غیرفعال کردن گرافیک برای دیدن خروجی در همین ترمینال
-append qemu_args "-nographic "
-
-# زمان انتظار برای اجرای موفق
-run_genode_until {--- \[fss_test\] Component started successfully.*} 30
+run_genode_until forever

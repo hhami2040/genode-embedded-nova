@@ -1,11 +1,23 @@
-#include <base/component.h>
+#include <libc/component.h>
 #include <base/log.h>
-#include <vfs/file_system.h>
-#include <libc/component.h> // این هدر را اضافه کنید
+#include <stdio.h>
+#include <string.h>
 
-// به جای ارث‌بری مستقیم از Component، از Libc::Component استفاده می‌کنیم
 void Libc::Component::construct(Libc::Env &env)
 {
-    (void)env;
-    Genode::log("--- [fss_test] Component started successfully with VFS and Libc ---");
-}s
+    // استفاده از Genode::log برای اطمینان از نمایش در کنسول
+    Genode::log(">>> FSS TEST: APP STARTED SUCCESSFULLY!");
+
+    FILE *file = fopen("/storage/data.log", "w+");
+
+    if (file) {
+        Genode::log(">>> FSS TEST: FILE SYSTEM ACCESS OK.");
+        const char *msg = "VMS Log: Stream started.";
+        fwrite(msg, 1, strlen(msg), file);
+        fflush(file); 
+        fclose(file);
+        Genode::log(">>> FSS TEST: LOG WRITTEN.");
+    } else {
+        Genode::log(">>> FSS TEST: ERROR OPENING FILE.");
+    }
+}
