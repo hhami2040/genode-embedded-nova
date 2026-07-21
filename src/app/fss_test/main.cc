@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <dirent.h> 
 
 struct Main
 {
@@ -30,6 +31,20 @@ struct Main
                 } else {
                     printf("Failed to open file for writing.\n");
                 }
+
+
+                DIR *dir = opendir(".");
+                if (dir) {
+                    struct dirent *entry;
+                    printf("--- Listing contents of 'testdir' ---\n");
+                    while ((entry = readdir(dir)) != NULL) {
+                        printf("Found in directory -> %s\n", entry->d_name);
+                    }
+                    closedir(dir);
+                } else {
+                    printf("Failed to open current directory for listing.\n");
+                }
+                // ----------------------------------------------------
 
                 fd = open(file_name, O_RDONLY);
                 if (fd >= 0) {
