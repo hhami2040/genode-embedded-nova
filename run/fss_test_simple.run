@@ -1,5 +1,8 @@
 create_boot_directory
 
+# استفاده از مسیر مطلقِ روتِ پروژه برای پیدا کردن دقیق پوشه host_data
+exec tar cf bin/my_host_files.tar -C [genode_dir]/repos/genode-embedded-nova/src/app/fss_test host_data
+
 build {
     init
     app/fss_test
@@ -31,21 +34,26 @@ install_config {
             <provides><service name="Timer"/></provides>
         </start>
 
+        <!-- معرفی فایل آرشیو به عنوان یک ماژول ROM -->
+        <rom name="my_host_files.tar"/>
+
         <start name="fss_test" caps="200">
             <resource name="RAM" quantum="32M"/>
             <config>
                 <libc stdout="/dev/log" stderr="/dev/log"/>
                 <vfs>
                     <dir name="dev"> <log/> </dir>
-                    <ram/>
+                    <!-- خواندن محتویات از فایل tar متصل شده -->
+                    <tar name="my_host_files.tar"/>
                 </vfs>
             </config>
         </start>
     </config>
 }
 
-build_boot_image [build_artifacts]
+# اضافه کردن فایل tar به تصاویر بوت ماشین مجازی
+build_boot_image [concat [build_artifacts] { my_host_files.tar }]
 
 append qemu_args " -m 512M "
 
-run_genode_until "--- MY APP FSS Test Finished ---\n" 30s
+run_genode_until "--- Host File Read Test Finished ---\n" 30s
