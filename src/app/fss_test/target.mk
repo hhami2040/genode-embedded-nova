@@ -1,3 +1,5 @@
 TARGET = fss_test
+LIBS   = libc base
 SRC_CC = main.cc
-LIBS   = base libc
+
+CC_CXX_WARN_STRICT_CONVERSION =
